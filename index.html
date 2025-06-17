@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Certified 5K Courses Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        
+        .info-panel {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .course-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .overland-park { border-left: 5px solid #e74c3c; }
+        .olathe { border-left: 5px solid #3498db; }
+        .kill-creek { border-left: 5px solid #f39c12; }
+        
+        .course-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease;
+        }
+        
+        .course-item:hover {
+            transform: translateX(5px);
+            background: #e9ecef;
+        }
+        
+        .course-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .course-details {
+            font-size: 0.9em;
+            color: #666;
+            margin: 3px 0;
+        }
+        
+        .course-id {
+            font-family: monospace;
+            background: #dee2e6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        
+        .expires-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .expires-excellent { background: #d4edda; color: #155724; }
+        .expires-good { background: #cce5ff; color: #0066cc; }
+        .expires-warning { background: #fff3cd; color: #856404; }
+        .expires-soon { background: #f8d7da; color: #721c24; }
+        
+        .recommendation-box {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        
+        .recommendation-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.3em;
+        }
+        
+        .distance-analysis {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+        .overland-dot { background: #e74c3c; }
+        .olathe-dot { background: #3498db; }
+        .kill-creek-dot { background: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ Complete Certified 5K Course Analysis</h1>
+            <p>Your comprehensive guide to USATF-certified courses near Kill Creek Park</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">Total 5K Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">Overland Park</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Olathe</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="info-panel">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot overland-dot"></div>
+                    <span><strong>Overland Park</strong> - 7 certified 5K courses</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot olathe-dot"></div>
+                    <span><strong>Olathe</strong> - 3 certified 5K courses</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot kill-creek-dot"></div>
+                    <span><strong>Kill Creek Park</strong> - Your planned location</span>
+                </div>
+            </div>
+            
+            <div class="course-grid">
+                <div class="course-section overland-park">
+                    <h3 class="section-title">
+                        🏢 Overland Park Courses (7 options)
+                    </h3>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Kansas City Mother's Day 5K</div>
+                        <div class="course-details"><span class="course-id">KS25001DT</span></div>
+                        <div class="course-details">📍 Overland Park • Drop: 0m • Sep: 2.18km</div>
+                        <span class="expires-badge expires-excellent">Expires 2035</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Patriots Run 5K</div>
+                        <div class="course-details"><span class="course-id">KS23012TJD</span></div>
+                        <div class="course-details">📍 Paige Field, Sprint Pkwy & 117th • Drop: 0.6m • Sep: 4.08km</div>
+                        <span class="expires-badge expires-excellent">Expires 2033</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Gobbler Grind '23 Alternate 5K</div>
+                        <div class="course-details"><span class="course-id">KS23020TJD</span></div>
+                        <div class="course-details">📍 Corporate Woods • Drop: 0m • Sep: 0km</div>
+                        <span class="expires-badge expires-excellent">Expires 2033</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Gobbler Grind 2022 5K</div>
+                        <div class="course-details"><span class="course-id">KS22033TJD</span></div>
+                        <div class="course-details">📍 Corporate Woods • Drop: 0.4m • Sep: 1.16km</div>
+                        <span class="expires-badge expires-good">Expires 2032</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Gobbler Grind 5K 2020</div>
+                        <div class="course-details"><span class="course-id">KS20015TJD</span></div>
+                        <div class="course-details">📍 Corporate Woods • Drop: 0.4m • Sep: 1.48km</div>
+                        <span class="expires-badge expires-warning">Expires 2030</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">BVRC Special Olympics 5K</div>
+                        <div class="course-details"><span class="course-id">KS19007TJD</span></div>
+                        <div class="course-details">📍 Overland Park • Drop: 0m • Sep: 0km</div>
+                        <span class="expires-badge expires-warning">Expires 2029</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Komen KC 5K</div>
+                        <div class="course-details"><span class="course-id">KS17013TJD</span></div>
+                        <div class="course-details">📍 Overland Park • Drop: -0.8m • Sep: 6.1km</div>
+                        <span class="expires-badge expires-warning">Expires 2027</span>
+                    </div>
+                </div>
+                
+                <div class="course-section olathe">
+                    <h3 class="section-title">
+                        🏙️ Olathe Courses (3 options)
+                    </h3>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Jared Coones Memorial Pumpkin Run</div>
+                        <div class="course-details"><span class="course-id">KS22022TJD</span></div>
+                        <div class="course-details">📍 Olathe • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">🎃 24-year tradition, 2,400+ participants</div>
+                        <span class="expires-badge expires-good">Expires 2032</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Heartland Soccer 5K</div>
+                        <div class="course-details"><span class="course-id">KS18019TJD</span></div>
+                        <div class="course-details">📍 Garmin Olathe Soccer Complex • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">⚽ World-class sports facility</div>
+                        <span class="expires-badge expires-warning">Expires 2028</span>
+                    </div>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Bug Run 5K</div>
+                        <div class="course-details"><span class="course-id">KS15045KH</span></div>
+                        <div class="course-details">📍 Olathe • Drop: 0m • Sep: 0.8km</div>
+                        <span class="expires-badge expires-soon">Expires 2025 ⚠️</span>
+                    </div>
+                </div>
+                
+                <div class="course-section kill-creek">
+                    <h3 class="section-title">
+                        🌲 Your Kill Creek Park Plan
+                    </h3>
+                    
+                    <div class="course-item">
+                        <div class="course-name">Kill Creek Park (Not Certified)</div>
+                        <div class="course-details">📍 33205 W 117th St, Olathe, KS 66061</div>
+                        <div class="course-details">💰 Cost: $500-1,500 to certify</div>
+                        <div class="course-details">⏰ Timeline: 2-3 months</div>
+                        <span class="expires-badge" style="background: #f39c12; color: white;">Needs Certification</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="recommendation-box">
+                <h3>💡 Top Recommendations</h3>
+                <p><strong>Best Immediate Option:</strong> Use the <strong>Patriots Run 5K course</strong> (KS23012TJD) - it's closest to Kill Creek Park and valid until 2033.</p>
+                <p><strong>Alternative:</strong> <strong>Gobbler Grind '23 Alternate</strong> (KS23020TJD) - perfect flat course with 0 elevation drop, also valid until 2033.</p>
+                <p><strong>Cost Savings:</strong> Using existing certified courses saves you $500-1,500 and months of time!</p>
+            </div>
+            
+            <div class="distance-analysis">
+                <h4>📊 Course Analysis & Comparison</h4>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Location</th>
+                            <th>Expires</th>
+                            <th>Elevation Drop</th>
+                            <th>Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Patriots Run 5K</strong></td>
+                            <td>Paige Field, Overland Park</td>
+                            <td>2033</td>
+                            <td>0.6m</td>
+                            <td>Memorial theme, community support</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gobbler Grind '23 Alt</strong></td>
+                            <td>Corporate Woods</td>
+                            <td>2033</td>
+                            <td>0m</td>
+                            <td>Flat & fast, proven infrastructure</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pumpkin Run</strong></td>
+                            <td>Olathe</td>
+                            <td>2032</td>
+                            <td>0m</td>
+                            <td>Large family event (2,400+ runners)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Heartland Soccer 5K</strong></td>
+                            <td>Garmin Complex, Olathe</td>
+                            <td>2028</td>
+                            <td>0m</td>
+                            <td>Modern sports facility</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px;">
+                    <h5>🎯 Next Steps:</h5>
+                    <ol>
+                        <li><strong>Contact Patriots Run organizers</strong> first - ask about using their certified course</li>
+                        <li><strong>Backup option:</strong> Contact Gobbler Grind for Corporate Woods course details</li>
+                        <li><strong>Only if neither works:</strong> Consider certifying Kill Creek Park ($500-1,500)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([38.8703, -94.7400], 11);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Custom icons
+        const overlandIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div style="background: #e74c3c; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 12px;">OP</div>',
+            iconSize: [25, 25],
+            iconAnchor: [12, 12]
+        });
+        
+        const olatheIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div style="background: #3498db; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 12px;">OL</div>',
+            iconSize: [25, 25],
+            iconAnchor: [12, 12]
+        });
+        
+        const killCreekIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div style="background: #f39c12; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.3);">KC</div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        
+        // Overland Park courses (approximate locations)
+        const corporateWoods = L.marker([38.9167, -94.6789], {icon: overlandIcon}).addTo(map);
+        corporateWoods.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🏢 Corporate Woods Area</h4>
+                <p><strong>Multiple Gobbler Grind Courses:</strong></p>
+                <ul style="margin: 5px 0; padding-left: 15px;">
+                    <li>2023 Alternate (expires 2033) ⭐</li>
+                    <li>2022 version (expires 2032)</li>
+                    <li>2020 version (expires 2030)</li>
+                </ul>
+                <p style="margin: 5px 0;"><strong>📍</strong> 9401 Indian Creek Trail</p>
+                <p style="margin: 5px 0; font-style: italic;">Flat, fast, proven infrastructure</p>
+            </div>
+        `);
+        
+        const paigeField = L.marker([38.8856, -94.7167], {icon: overlandIcon}).addTo(map);
+        paigeField.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🇺🇸 Paige Field</h4>
+                <p><strong>Patriots Run 5K</strong></p>
+                <p><strong>📍</strong> Sprint Parkway & 117th St</p>
+                <p><strong>🏃‍♂️</strong> KS23012TJD</p>
+                <p><strong>✅</strong> Valid until 2033</p>
+                <p style="font-style: italic;">Memorial race, strong community support</p>
+                <div style="background: #28a745; color: white; padding: 5px; border-radius: 5px; margin-top: 10px; text-align: center;">
+                    <strong>⭐ TOP RECOMMENDATION</strong>
+                </div>
+            </div>
+        `);
+        
+        const mothersDayArea = L.marker([38.9000, -94.6500], {icon: overlandIcon}).addTo(map);
+        mothersDayArea.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">👩‍👧‍👦 Mother's Day 5K</h4>
+                <p><strong>Kansas City Mother's Day 5K</strong></p>
+                <p><strong>📍</strong> Overland Park</p>
+                <p><strong>🏃‍♂️</strong> KS25001DT</p>
+                <p><strong>✅</strong> Valid until 2035</p>
+                <p style="font-style: italic;">Longest validity period</p>
+            </div>
+        `);
+        
+        // Olathe courses
+        const garminComplex = L.marker([38.8389, -94.7694], {icon: olatheIcon}).addTo(map);
+        garminComplex.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">⚽ Garmin Olathe Soccer Complex</h4>
+                <p><strong>Heartland Soccer 5K</strong></p>
+                <p><strong>📍</strong> 10541 S Warwick St</p>
+                <p><strong>🏃‍♂️</strong> KS18019TJD</p>
+                <p><strong>✅</strong> Valid until 2028</p>
+                <p style="font-style: italic;">World-class sports facility</p>
+            </div>
+        `);
+        
+        const pumpkinRunArea = L.marker([38.8814, -94.8191], {icon: olatheIcon}).addTo(map);
+        pumpkinRunArea.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🎃 Pumpkin Run</h4>
+                <p><strong>Jared Coones Memorial Pumpkin Run</strong></p>
+                <p><strong>📍</strong> Olathe (location TBD)</p>
+                <p><strong>🏃‍♂️</strong> KS22022TJD</p>
+                <p><strong>✅</strong> Valid until 2032</p>
+                <p><strong>👥</strong> 2,400+ participants annually</p>
+                <p style="font-style: italic;">24-year tradition, family-friendly</p>
+            </div>
+        `);
+        
+        // Kill Creek Park
+        const killCreek = L.marker([38.8567, -94.7289], {icon: killCreekIcon}).addTo(map);
+        killCreek.bindPopup(`
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🌲 Kill Creek Park</h4>
+                <p><strong>Your Planned Location</strong></p>
+                <p><strong>📍</strong> 33205 W 117th St, Olathe</p>
+                <p><strong>⏳</strong> Not yet certified</p>
+                <p><strong>💰</strong> $500-1,500 to certify</p>
+                <p><strong>📅</strong> 2-3 months timeline</p>
+                <div style="background: #f39c12; color: white; padding: 5px; border-radius: 5px; margin-top: 10px; text-align: center;">
+                    <strong>Consider alternatives first!</strong>
+                </div>
+            </div>
+        `);
+        
+        // Add a scale control
+        L.control.scale({position: 'bottomright'}).addTo(map);
+        
+        // Add distance measurement functionality
+        let distanceControl = L.control({position: 'topright'});
+        distanceControl.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            div.style.backgroundColor = 'white';
+            div.style.padding = '10px';
+            div.style.cursor = 'pointer';
+            div.style.borderRadius = '5px';
+            div.style.fontWeight = 'bold';
+            div.innerHTML = '📏 Show Distances';
+            
+            let showingDistances = false;
+            let distanceLines = [];
+            
+            div.onclick = function() {
+                if (!showingDistances) {
+                    const killCreekPos = [38.8567, -94.7289];
+                    
+                    // Distance to Patriots Run
+                    const patriotsLine = L.polyline([killCreekPos, [38.8856, -94.7167]], {
+                        color: '#e74c3c',
+                        weight: 3,
+                        dashArray: '10, 5',
+                        opacity: 0.8
+                    }).addTo(map);
+                    patriotsLine.bindPopup('<strong>~6 miles</strong> to Patriots Run (CLOSEST)');
+                    distanceLines.push(patriotsLine);
+                    
+                    // Distance to Corporate Woods
+                    const corporateLine = L.polyline([killCreekPos, [38.9167, -94.6789]], {
+                        color: '#e74c3c',
+                        weight: 3,
+                        dashArray: '10, 5',
+                        opacity: 0.8
+                    }).addTo(map);
+                    corporateLine.bindPopup('<strong>~8 miles</strong> to Corporate Woods');
+                    distanceLines.push(corporateLine);
+                    
+                    // Distance to Garmin Complex
+                    const garminLine = L.polyline([killCreekPos, [38.8389, -94.7694]], {
+                        color: '#3498db',
+                        weight: 3,
+                        dashArray: '10, 5',
+                        opacity: 0.8
+                    }).addTo(map);
+                    garminLine.bindPopup('<strong>~4 miles</strong> to Garmin Complex');
+                    distanceLines.push(garminLine);
+                    
+                    showingDistances = true;
+                    div.innerHTML = '📏 Hide Distances';
+                } else {
+                    distanceLines.forEach(line => map.removeLayer(line));
+                    distanceLines = [];
+                    showingDistances = false;
+                    div.innerHTML = '📏 Show Distances';
+                }
+            };
+            return div;
+        };
+        distanceControl.addTo(map);
+        
+        // Add course filter functionality
+        let filterControl = L.control({position: 'topleft'});
+        filterControl.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            div.style.backgroundColor = 'white';
+            div.style.padding = '10px';
+            div.style.borderRadius = '5px';
+            div.innerHTML = `
+                <div style="margin-bottom: 10px; font-weight: bold;">Filter Courses:</div>
+                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                    <input type="checkbox" id="show-overland" checked> Overland Park (7)
+                </label>
+                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                    <input type="checkbox" id="show-olathe" checked> Olathe (3)
+                </label>
+                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                    <input type="checkbox" id="show-kill-creek" checked> Kill Creek Park
+                </label>
+            `;
+            
+            // Store all markers for filtering
+            const overlandMarkers = [corporateWoods, paigeField, mothersDayArea];
+            const olatheMarkers = [garminComplex, pumpkinRunArea];
+            const killCreekMarkers = [killCreek];
+            
+            div.querySelector('#show-overland').onchange = function() {
+                overlandMarkers.forEach(marker => {
+                    if (this.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            };
+            
+            div.querySelector('#show-olathe').onchange = function() {
+                olatheMarkers.forEach(marker => {
+                    if (this.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            };
+            
+            div.querySelector('#show-kill-creek').onchange = function() {
+                killCreekMarkers.forEach(marker => {
+                    if (this.checked) {
+                        marker.addTo(map);
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            };
+            
+            return div;
+        };
+        filterControl.addTo(map);
+    </script>
+</body>
+</html>
