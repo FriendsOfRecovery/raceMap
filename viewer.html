@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer - Race Course Certification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .back-button {
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .back-button:hover {
+            background: #218838;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .back-button::before {
+            content: "← ";
+        }
+        
+        .title {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 300;
+        }
+        
+        .pdf-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .pdf-info {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .course-id {
+            font-family: monospace;
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .course-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 10px 0 5px 0;
+        }
+        
+        .course-details {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            height: 80vh;
+            border: none;
+        }
+        
+        .error-message {
+            padding: 40px;
+            text-align: center;
+            color: #721c24;
+            background: #f8d7da;
+            margin: 20px;
+            border-radius: 10px;
+        }
+        
+        .mobile-warning {
+            display: none;
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-warning {
+                display: block;
+            }
+            
+            .pdf-viewer {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="nav-container">
+            <a href="index.html" class="back-button">Back to Course Map</a>
+            <h1 class="title">🏃‍♂️ Course Certification Viewer</h1>
+            <div></div>
+        </div>
+    </div>
+    
+    <div class="mobile-warning">
+        📱 On mobile? You may need to download the PDF to view it properly. Tap the download button in the PDF viewer.
+    </div>
+    
+    <div class="pdf-container">
+        <div class="pdf-info">
+            <span class="course-id" id="courseId">Loading...</span>
+            <div class="course-name" id="courseName">Loading course information...</div>
+            <div class="course-details" id="courseDetails">Please wait while we load the certification document.</div>
+        </div>
+        
+        <iframe id="pdfViewer" class="pdf-viewer" src="" title="Course Certification PDF">
+            <div class="error-message">
+                <h3>PDF Viewer Not Supported</h3>
+                <p>Your browser doesn't support PDF viewing. Please <a href="" id="downloadLink">download the PDF</a> to view it.</p>
+            </div>
+        </iframe>
+    </div>
+
+    <script>
+        // Course information database
+        const courseInfo = {
+            'KS25001DT': {
+                name: 'Kansas City Mother\'s Day 5K',
+                location: 'Overland Park',
+                expires: '2035',
+                drop: '0m',
+                separation: '2.18km'
+            },
+            'KS23012TJD': {
+                name: 'Patriots Run 5K',
+                location: 'Paige Field, Sprint Pkwy & 117th',
+                expires: '2033',
+                drop: '0.6m',
+                separation: '4.08km'
+            },
+            'KS23020TJD': {
+                name: 'Gobbler Grind \'23 Alternate 5K',
+                location: 'Corporate Woods',
+                expires: '2033',
+                drop: '0m',
+                separation: '0km'
+            },
+            'KS22033TJD': {
+                name: 'Gobbler Grind 2022 5K',
+                location: 'Corporate Woods',
+                expires: '2032',
+                drop: '0.4m',
+                separation: '1.16km'
+            },
+            'KS20015TJD': {
+                name: 'Gobbler Grind 5K 2020',
+                location: 'Corporate Woods',
+                expires: '2030',
+                drop: '0.4m',
+                separation: '1.48km'
+            },
+            'KS19007TJD': {
+                name: 'BVRC Special Olympics 5K',
+                location: 'Overland Park',
+                expires: '2029',
+                drop: '0m',
+                separation: '0km'
+            },
+            'KS17013TJD': {
+                name: 'Komen KC 5K',
+                location: 'Overland Park',
+                expires: '2027',
+                drop: '-0.8m',
+                separation: '6.1km'
+            },
+            'KS22022TJD': {
+                name: 'Jared Coones Memorial Pumpkin Run',
+                location: 'Olathe',
+                expires: '2032',
+                drop: '0m',
+                separation: '0km'
+            },
+            'KS18019TJD': {
+                name: 'Heartland Soccer 5K',
+                location: 'Garmin Olathe Soccer Complex',
+                expires: '2028',
+                drop: '0m',
+                separation: '0km'
+            },
+            'KS15045KH': {
+                name: 'Bug Run 5K',
+                location: 'Olathe',
+                expires: '2025',
+                drop: '0m',
+                separation: '0.8km'
+            }
+        };
+
+        // Get PDF parameter from URL
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Load PDF and course information
+        function loadPDF() {
+            const pdfParam = getURLParameter('pdf');
+            
+            if (!pdfParam) {
+                document.getElementById('courseId').textContent = 'Error';
+                document.getElementById('courseName').textContent = 'No PDF specified';
+                document.getElementById('courseDetails').textContent = 'Please return to the course map and select a certification to view.';
+                return;
+            }
+
+            // Extract course ID from filename
+            const courseId = pdfParam.split(' - ')[0];
+            const pdfPath = `public/assets/${pdfParam}`;
+            
+            // Update course information
+            if (courseInfo[courseId]) {
+                const info = courseInfo[courseId];
+                document.getElementById('courseId').textContent = courseId;
+                document.getElementById('courseName').textContent = info.name;
+                document.getElementById('courseDetails').textContent = 
+                    `📍 ${info.location} • Drop: ${info.drop} • Separation: ${info.separation} • Valid until ${info.expires}`;
+            } else {
+                document.getElementById('courseId').textContent = courseId;
+                document.getElementById('courseName').textContent = 'Course Information';
+                document.getElementById('courseDetails').textContent = 'Viewing certification document...';
+            }
+
+            // Load PDF in iframe
+            document.getElementById('pdfViewer').src = pdfPath;
+            document.getElementById('downloadLink').href = pdfPath;
+        }
+
+        // Handle PDF loading errors
+        document.getElementById('pdfViewer').addEventListener('error', function() {
+            this.style.display = 'none';
+            document.querySelector('.error-message').style.display = 'block';
+        });
+
+        // Load PDF when page loads
+        window.addEventListener('load', loadPDF);
+    </script>
+</body>
+</html>

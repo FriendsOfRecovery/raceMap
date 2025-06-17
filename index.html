@@ -151,6 +151,29 @@
         .expires-warning { background: #fff3cd; color: #856404; }
         .expires-soon { background: #f8d7da; color: #721c24; }
         
+        .pdf-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: background 0.2s ease;
+        }
+        
+        .pdf-link:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .pdf-link::before {
+            content: "📄 ";
+        }
+        
         .recommendation-box {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
@@ -213,6 +236,46 @@
         .overland-dot { background: #e74c3c; }
         .olathe-dot { background: #3498db; }
         .kill-creek-dot { background: #f39c12; }
+        
+        .zoom-control {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .zoom-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .zoom-button:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+            transform: translateY(-1px);
+        }
+        
+        .zoom-button.locked {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .zoom-button.locked:hover {
+            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        }
     </style>
 </head>
 <body>
@@ -237,7 +300,14 @@
             </div>
         </div>
         
-        <div id="map"></div>
+        <div id="map">
+            <div class="zoom-control">
+                <button id="zoomToggle" class="zoom-button locked">
+                    <span id="lockIcon">🔒</span>
+                    <span id="lockText">Zoom Locked</span>
+                </button>
+            </div>
+        </div>
         
         <div class="info-panel">
             <div class="legend">
@@ -264,50 +334,64 @@
                     <div class="course-item">
                         <div class="course-name">Kansas City Mother's Day 5K</div>
                         <div class="course-details"><span class="course-id">KS25001DT</span></div>
-                        <div class="course-details">📍 Overland Park • Drop: 0m • Sep: 2.18km</div>
+                        <div class="course-details">📍 Overland Park, KS • Drop: 0m • Sep: 2.18km</div>
+                        <div class="course-details">🏢 <em>Full address available in certification document</em></div>
                         <span class="expires-badge expires-excellent">Expires 2035</span>
+                        <a href="viewer.html?pdf=KS25001DT - Kansas City Mother's Day 5 km.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Patriots Run 5K</div>
                         <div class="course-details"><span class="course-id">KS23012TJD</span></div>
-                        <div class="course-details">📍 Paige Field, Sprint Pkwy & 117th • Drop: 0.6m • Sep: 4.08km</div>
+                        <div class="course-details">📍 Paige Field, Sprint Parkway & 117th St, Overland Park, KS</div>
+                        <div class="course-details">📏 Drop: 0.6m • Sep: 4.08km</div>
                         <span class="expires-badge expires-excellent">Expires 2033</span>
+                        <a href="viewer.html?pdf=KS23012TJD - Patriots Run 5k.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Gobbler Grind '23 Alternate 5K</div>
                         <div class="course-details"><span class="course-id">KS23020TJD</span></div>
-                        <div class="course-details">📍 Corporate Woods • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">📍 Corporate Woods, 9401 Indian Creek Trail, Overland Park, KS</div>
+                        <div class="course-details">📏 Drop: 0m • Sep: 0km</div>
                         <span class="expires-badge expires-excellent">Expires 2033</span>
+                        <a href="viewer.html?pdf=KS23020TJD - Gobbler Grind '23 Alternate 5K.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Gobbler Grind 2022 5K</div>
                         <div class="course-details"><span class="course-id">KS22033TJD</span></div>
-                        <div class="course-details">📍 Corporate Woods • Drop: 0.4m • Sep: 1.16km</div>
+                        <div class="course-details">📍 Corporate Woods, 9401 Indian Creek Trail, Overland Park, KS</div>
+                        <div class="course-details">📏 Drop: 0.4m • Sep: 1.16km</div>
                         <span class="expires-badge expires-good">Expires 2032</span>
+                        <a href="viewer.html?pdf=KS22033TJD - Gobbler Grind 2022 5k.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Gobbler Grind 5K 2020</div>
                         <div class="course-details"><span class="course-id">KS20015TJD</span></div>
-                        <div class="course-details">📍 Corporate Woods • Drop: 0.4m • Sep: 1.48km</div>
+                        <div class="course-details">📍 Corporate Woods, 9401 Indian Creek Trail, Overland Park, KS</div>
+                        <div class="course-details">📏 Drop: 0.4m • Sep: 1.48km</div>
                         <span class="expires-badge expires-warning">Expires 2030</span>
+                        <a href="viewer.html?pdf=KS20015TJD - Gobbler Grind 5K 2020.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">BVRC Special Olympics 5K</div>
                         <div class="course-details"><span class="course-id">KS19007TJD</span></div>
-                        <div class="course-details">📍 Overland Park • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">📍 Overland Park, KS • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">🏢 <em>Full address available in certification document</em></div>
                         <span class="expires-badge expires-warning">Expires 2029</span>
+                        <a href="viewer.html?pdf=KS19007TJD - BVRC Special Olympics 5K.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Komen KC 5K</div>
                         <div class="course-details"><span class="course-id">KS17013TJD</span></div>
-                        <div class="course-details">📍 Overland Park • Drop: -0.8m • Sep: 6.1km</div>
+                        <div class="course-details">📍 Overland Park, KS • Drop: -0.8m • Sep: 6.1km</div>
+                        <div class="course-details">🏢 <em>Full address available in certification document</em></div>
                         <span class="expires-badge expires-warning">Expires 2027</span>
+                        <a href="viewer.html?pdf=KS17013TJD - Komen KC 5K.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                 </div>
                 
@@ -319,24 +403,30 @@
                     <div class="course-item">
                         <div class="course-name">Jared Coones Memorial Pumpkin Run</div>
                         <div class="course-details"><span class="course-id">KS22022TJD</span></div>
-                        <div class="course-details">📍 Olathe • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">📍 Olathe, KS • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">🏢 <em>Full address available in certification document</em></div>
                         <div class="course-details">🎃 24-year tradition, 2,400+ participants</div>
                         <span class="expires-badge expires-good">Expires 2032</span>
+                        <a href="viewer.html?pdf=KS22022TJD - Jared Coones Memorial Pumpkin Run.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Heartland Soccer 5K</div>
                         <div class="course-details"><span class="course-id">KS18019TJD</span></div>
-                        <div class="course-details">📍 Garmin Olathe Soccer Complex • Drop: 0m • Sep: 0km</div>
+                        <div class="course-details">📍 Garmin Olathe Soccer Complex, 10541 S Warwick St, Olathe, KS 66061</div>
+                        <div class="course-details">📏 Drop: 0m • Sep: 0km</div>
                         <div class="course-details">⚽ World-class sports facility</div>
                         <span class="expires-badge expires-warning">Expires 2028</span>
+                        <a href="viewer.html?pdf=KS18019TJD - Heartland Soccer 5k.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                     
                     <div class="course-item">
                         <div class="course-name">Bug Run 5K</div>
                         <div class="course-details"><span class="course-id">KS15045KH</span></div>
-                        <div class="course-details">📍 Olathe • Drop: 0m • Sep: 0.8km</div>
+                        <div class="course-details">📍 Olathe, KS • Drop: 0m • Sep: 0.8km</div>
+                        <div class="course-details">🏢 <em>Full address available in certification document</em></div>
                         <span class="expires-badge expires-soon">Expires 2025 ⚠️</span>
+                        <a href="viewer.html?pdf=KS15045KH - Bug Run  5k.pdf" target="_blank" class="pdf-link">View Certification</a>
                     </div>
                 </div>
                 
@@ -420,12 +510,21 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize the map
-        const map = L.map('map').setView([38.8703, -94.7400], 11);
+        // Initialize the map with zoom disabled initially
+        const map = L.map('map', {
+            zoomControl: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            touchZoom: false,
+            boxZoom: false
+        }).setView([38.8703, -94.7400], 11);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
+        
+        // Track zoom lock state
+        let zoomLocked = true;
         
         // Custom icons
         const overlandIcon = L.divIcon({
@@ -462,6 +561,11 @@
                 </ul>
                 <p style="margin: 5px 0;"><strong>📍</strong> 9401 Indian Creek Trail</p>
                 <p style="margin: 5px 0; font-style: italic;">Flat, fast, proven infrastructure</p>
+                <div style="margin-top: 10px;">
+                    <a href="viewer.html?pdf=KS23020TJD - Gobbler Grind '23 Alternate 5K.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8em; margin: 2px;">📄 2023 Cert</a>
+                    <a href="viewer.html?pdf=KS22033TJD - Gobbler Grind 2022 5k.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8em; margin: 2px;">📄 2022 Cert</a>
+                    <a href="viewer.html?pdf=KS20015TJD - Gobbler Grind 5K 2020.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8em; margin: 2px;">📄 2020 Cert</a>
+                </div>
             </div>
         `);
         
@@ -470,12 +574,15 @@
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🇺🇸 Paige Field</h4>
                 <p><strong>Patriots Run 5K</strong></p>
-                <p><strong>📍</strong> Sprint Parkway & 117th St</p>
+                <p><strong>📍</strong> Paige Field, Sprint Parkway & 117th St, Overland Park, KS</p>
                 <p><strong>🏃‍♂️</strong> KS23012TJD</p>
                 <p><strong>✅</strong> Valid until 2033</p>
                 <p style="font-style: italic;">Memorial race, strong community support</p>
                 <div style="background: #28a745; color: white; padding: 5px; border-radius: 5px; margin-top: 10px; text-align: center;">
                     <strong>⭐ TOP RECOMMENDATION</strong>
+                </div>
+                <div style="margin-top: 10px;">
+                    <a href="viewer.html?pdf=KS23012TJD - Patriots Run 5k.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 0.9em; width: 100%; text-align: center; box-sizing: border-box;">📄 View Certification</a>
                 </div>
             </div>
         `);
@@ -485,10 +592,13 @@
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: #2c3e50;">👩‍👧‍👦 Mother's Day 5K</h4>
                 <p><strong>Kansas City Mother's Day 5K</strong></p>
-                <p><strong>📍</strong> Overland Park</p>
+                <p><strong>📍</strong> Overland Park, KS (exact address in certification)</p>
                 <p><strong>🏃‍♂️</strong> KS25001DT</p>
                 <p><strong>✅</strong> Valid until 2035</p>
                 <p style="font-style: italic;">Longest validity period</p>
+                <div style="margin-top: 10px;">
+                    <a href="viewer.html?pdf=KS25001DT - Kansas City Mother's Day 5 km.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 0.9em; width: 100%; text-align: center; box-sizing: border-box;">📄 View Certification</a>
+                </div>
             </div>
         `);
         
@@ -498,10 +608,13 @@
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: #2c3e50;">⚽ Garmin Olathe Soccer Complex</h4>
                 <p><strong>Heartland Soccer 5K</strong></p>
-                <p><strong>📍</strong> 10541 S Warwick St</p>
+                <p><strong>📍</strong> Garmin Olathe Soccer Complex, 10541 S Warwick St, Olathe, KS 66061</p>
                 <p><strong>🏃‍♂️</strong> KS18019TJD</p>
                 <p><strong>✅</strong> Valid until 2028</p>
                 <p style="font-style: italic;">World-class sports facility</p>
+                <div style="margin-top: 10px;">
+                    <a href="viewer.html?pdf=KS18019TJD - Heartland Soccer 5k.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 0.9em; width: 100%; text-align: center; box-sizing: border-box;">📄 View Certification</a>
+                </div>
             </div>
         `);
         
@@ -510,11 +623,14 @@
             <div style="font-family: 'Segoe UI', sans-serif; max-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🎃 Pumpkin Run</h4>
                 <p><strong>Jared Coones Memorial Pumpkin Run</strong></p>
-                <p><strong>📍</strong> Olathe (location TBD)</p>
+                <p><strong>📍</strong> Olathe, KS (exact address in certification)</p>
                 <p><strong>🏃‍♂️</strong> KS22022TJD</p>
                 <p><strong>✅</strong> Valid until 2032</p>
                 <p><strong>👥</strong> 2,400+ participants annually</p>
                 <p style="font-style: italic;">24-year tradition, family-friendly</p>
+                <div style="margin-top: 10px;">
+                    <a href="viewer.html?pdf=KS22022TJD - Jared Coones Memorial Pumpkin Run.pdf" target="_blank" style="display: inline-block; background: #007bff; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 0.9em; width: 100%; text-align: center; box-sizing: border-box;">📄 View Certification</a>
+                </div>
             </div>
         `);
         
@@ -656,6 +772,73 @@
             return div;
         };
         filterControl.addTo(map);
+        
+        // Zoom lock toggle functionality
+        document.getElementById('zoomToggle').addEventListener('click', function() {
+            const button = this;
+            const lockIcon = document.getElementById('lockIcon');
+            const lockText = document.getElementById('lockText');
+            
+            zoomLocked = !zoomLocked;
+            
+            if (zoomLocked) {
+                // Lock zoom
+                map.scrollWheelZoom.disable();
+                map.doubleClickZoom.disable();
+                map.touchZoom.disable();
+                map.boxZoom.disable();
+                
+                // Remove zoom controls if they exist
+                if (map.zoomControl) {
+                    map.removeControl(map.zoomControl);
+                }
+                
+                button.classList.add('locked');
+                lockIcon.textContent = '🔒';
+                lockText.textContent = 'Zoom Locked';
+            } else {
+                // Unlock zoom and add zoom controls
+                map.scrollWheelZoom.enable();
+                map.doubleClickZoom.enable();
+                map.touchZoom.enable();
+                map.boxZoom.enable();
+                
+                // Add zoom control buttons
+                map.zoomControl = L.control.zoom({ position: 'topright' }).addTo(map);
+                
+                button.classList.remove('locked');
+                lockIcon.textContent = '🔓';
+                lockText.textContent = 'Zoom Unlocked';
+            }
+        });
+        
+        // Add instruction for zoom lock
+        const instructionControl = L.control({position: 'bottomleft'});
+        instructionControl.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            div.style.backgroundColor = 'rgba(255,255,255,0.9)';
+            div.style.padding = '10px';
+            div.style.borderRadius = '8px';
+            div.style.fontSize = '0.85em';
+            div.style.maxWidth = '200px';
+            div.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">📍 Navigation Tip:</div>
+                <div>Click the "🔒 Zoom Locked" button to enable map zooming and panning.</div>
+            `;
+            return div;
+        };
+        instructionControl.addTo(map);
+        
+        // Hide instruction after zoom is unlocked
+        document.getElementById('zoomToggle').addEventListener('click', function() {
+            if (!zoomLocked) {
+                setTimeout(() => {
+                    try {
+                        map.removeControl(instructionControl);
+                    } catch(e) {}
+                }, 3000);
+            }
+        });
     </script>
 </body>
 </html>
