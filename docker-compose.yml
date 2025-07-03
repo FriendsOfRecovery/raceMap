@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000" # Expose port 3000 inside the network, Caddy will handle external mapping
+    volumes:
+      - downloads_volume:/app/downloads # Mount named volume for downloads
+    networks:
+      - racemap_network # Attach to the custom network
+
+volumes:
+  downloads_volume:
+    driver: local # Use the local driver for the volume
+
+networks:
+  racemap_network:
+    driver: bridge # Default driver is fine

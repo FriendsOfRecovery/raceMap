@@ -1,0 +1,13 @@
+services:
+  app:
+    # Use the image you built and pushed
+    image: foradocker/racemap:latest # Or the specific tag you used
+    # Remove the 'build: .' line
+    #ports:
+     # - "3000" # Expose port 3000 inside the network, Caddy will handle external mapping
+    networks:
+      - racemap
+
+networks:
+  racemap:
+    external: true # Default driver is fine

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python3 -m pip install PyPDF2)",
       "Bash(python3:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:certifiedroadraces.com)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(grep:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": []
   }
