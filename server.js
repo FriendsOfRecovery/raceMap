@@ -8,7 +8,9 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const winston = require('winston');
 const NodeCache = require('node-cache');
+const axios = require('axios');
 const { searchUSATFDatabase, findCoursePDF, extractPDFData } = require('./services/courseService');
+const cacheService = require('./services/cacheService');
 
 const app = express();
 
@@ -130,17 +132,29 @@ app.post('/api/search-courses', async (req, res) => {
       return res.json(result);
     }
 
-    // Find PDFs for each course
+    // Find PDFs for each course with caching
     const coursesWithPDFs = await Promise.all(
       courses.map(async (course) => {
         try {
+          // First check if we have cached course data (including PDF info)
+          const cachedCourse = cacheService.getCourseCache(course.id);
+          if (cachedCourse) {
+            console.log(`Cache hit for course: ${course.id} - using cached data`);
+            return {
+              ...course,
+              ...cachedCourse
+            };
+          }
+
           console.log(`Looking for PDF for course: ${course.id} - ${course.name}`);
           const pdfInfo = await findCoursePDF(course);
           
+          let courseWithPDF = { ...course };
+          
           if (pdfInfo && pdfInfo.pdfPath) {
-            // Extract PDF data using Python scripts
+            // Extract PDF data using Python scripts (this will check its own cache)
             const extractedData = await extractPDFData(pdfInfo.pdfPath);
-            return {
+            courseWithPDF = {
               ...course,
               pdfUrl: `/api/pdf/${encodeURIComponent(path.basename(pdfInfo.pdfPath))}`,
               pdfPath: pdfInfo.pdfPath,
@@ -148,7 +162,14 @@ app.post('/api/search-courses', async (req, res) => {
             };
           }
           
-          return course;
+          // Cache the complete course data
+          cacheService.setCourseCache(course.id, {
+            pdfUrl: courseWithPDF.pdfUrl,
+            pdfPath: courseWithPDF.pdfPath,
+            extractedData: courseWithPDF.extractedData
+          });
+          
+          return courseWithPDF;
         } catch (error) {
           console.error(`Error processing course ${course.id}:`, error.message);
           return course;
@@ -221,6 +242,116 @@ app.get('/api/pdf/:filename', (req, res) => {
   }
 });
 
+// Geocoding endpoint with caching
+app.post('/api/geocode', async (req, res) => {
+  try {
+    const { city, state } = req.body;
+    
+    if (!city || !state) {
+      return res.status(400).json({ error: 'City and state are required' });
+    }
+    
+    // Check cache first
+    const cachedCoords = cacheService.getGeocodingCache(city, state);
+    if (cachedCoords) {
+      return res.json({ 
+        coordinates: cachedCoords,
+        cached: true 
+      });
+    }
+    
+    // Geocode using Nominatim with rate limiting respect
+    const query = `${city}, ${state}, United States`;
+    
+    try {
+      // Add delay to respect rate limits and proper headers
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+        params: {
+          format: 'json',
+          q: query,
+          limit: 3,
+          addressdetails: 1
+        },
+        headers: {
+          'User-Agent': 'Race-Course-Finder/1.0 (contact@example.com)'
+        },
+        timeout: 5000
+      });
+      
+      const data = response.data;
+      
+      if (data && data.length > 0) {
+        // Filter for city/town/village results, avoid counties
+        const cityResult = data.find(result => {
+          const type = result.type;
+          const addressType = result.addresstype;
+          const displayName = result.display_name.toLowerCase();
+          
+          // Prefer cities, towns, villages over counties
+          if (type === 'city' || type === 'town' || type === 'village' || 
+              addressType === 'city' || addressType === 'town' || addressType === 'village') {
+            return true;
+          }
+          
+          // Avoid county results
+          if (type === 'county' || addressType === 'county' || 
+              displayName.includes('county')) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        if (cityResult) {
+          const coordinates = [parseFloat(cityResult.lat), parseFloat(cityResult.lon)];
+          
+          // Cache the result
+          cacheService.setGeocodingCache(city, state, coordinates);
+          
+          return res.json({ 
+            coordinates,
+            cached: false,
+            source: cityResult.display_name 
+          });
+        }
+        
+        // If no specific city found, use first non-county result
+        const nonCountyResult = data.find(result => {
+          const displayName = result.display_name.toLowerCase();
+          return !displayName.includes('county');
+        });
+        
+        if (nonCountyResult) {
+          const coordinates = [parseFloat(nonCountyResult.lat), parseFloat(nonCountyResult.lon)];
+          
+          // Cache the result
+          cacheService.setGeocodingCache(city, state, coordinates);
+          
+          return res.json({ 
+            coordinates,
+            cached: false,
+            source: nonCountyResult.display_name 
+          });
+        }
+      }
+      
+      // No results found
+      logger.info(`No geocoding results for: ${city}, ${state}`);
+      res.status(404).json({ error: 'Location not found' });
+      
+    } catch (error) {
+      logger.warn(`Geocoding failed for ${city}, ${state}: ${error.message}`);
+      res.status(404).json({ error: 'Geocoding service unavailable' });
+    }
+    
+  } catch (error) {
+    logger.error('Geocoding error:', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Geocoding service error' });
+  }
+});
+
 // Get available states for dropdown
 app.get('/api/states', (req, res) => {
   const states = [
@@ -282,16 +413,34 @@ app.get('/api/states', (req, res) => {
 
 // Cache management endpoints
 app.get('/api/cache/stats', (req, res) => {
-  const stats = cache.getStats();
+  const memoryStats = cache.getStats();
+  const persistentStats = cacheService.getCacheStats();
+  
   res.json({
-    ...stats,
-    keys: cache.keys()
+    memory: {
+      ...memoryStats,
+      keys: cache.keys()
+    },
+    persistent: persistentStats
   });
 });
 
 app.delete('/api/cache/clear', (req, res) => {
   cache.flushAll();
-  res.json({ message: 'Cache cleared' });
+  cacheService.clearAllCaches();
+  res.json({ message: 'All caches cleared' });
+});
+
+app.delete('/api/cache/clear/geocoding', (req, res) => {
+  cacheService.geocodingCache = {};
+  cacheService.saveCache(cacheService.geocodingCache, cacheService.geocodingCacheFile);
+  res.json({ message: 'Geocoding cache cleared' });
+});
+
+app.delete('/api/cache/clear/pdf', (req, res) => {
+  cacheService.pdfCache = {};
+  cacheService.saveCache(cacheService.pdfCache, cacheService.pdfCacheFile);
+  res.json({ message: 'PDF cache cleared' });
 });
 
 // Health check endpoint

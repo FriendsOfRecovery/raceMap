@@ -784,9 +784,16 @@
         async function loadStates() {
             try {
                 const response = await fetch('/api/states');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const states = await response.json();
                 
                 const stateSelect = document.getElementById('stateSelect');
+                if (!stateSelect) {
+                    throw new Error('State select element not found');
+                }
+                
                 states.forEach(state => {
                     const option = document.createElement('option');
                     option.value = state.code;
@@ -795,6 +802,11 @@
                 });
             } catch (error) {
                 console.error('Failed to load states:', error);
+                // Show user-friendly error
+                const stateSelect = document.getElementById('stateSelect');
+                if (stateSelect) {
+                    stateSelect.innerHTML = '<option value="">Error loading states</option>';
+                }
             }
         }
         
@@ -803,11 +815,11 @@
             const retryBtn = document.getElementById('retryBtn');
             const clearBtn = document.getElementById('clearBtn');
             const cityInput = document.getElementById('cityInput');
-            const advancedToggle = document.querySelector('.toggle-button');
+            const advancedToggle = document.getElementById('advancedToggle');
             
-            searchBtn.addEventListener('click', handleSearch);
-            retryBtn.addEventListener('click', handleSearch);
-            clearBtn.addEventListener('click', clearSearchForm);
+            if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+            if (retryBtn) retryBtn.addEventListener('click', handleSearch);
+            if (clearBtn) clearBtn.addEventListener('click', clearSearchForm);
             
             // Advanced toggle
             if (advancedToggle) {
@@ -815,11 +827,13 @@
             }
             
             // Enter key on city input
-            cityInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleSearch();
-                }
-            });
+            if (cityInput) {
+                cityInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        handleSearch();
+                    }
+                });
+            }
             
             // Example search buttons
             document.addEventListener('click', function(e) {
@@ -862,16 +876,17 @@
             showWelcomeState();
         }
         
-        function toggleAdvancedOptions() {
+        function toggleAdvancedOptions(event) {
             const advancedOptions = document.getElementById('advancedOptions');
+            const button = event.target;
             const isVisible = advancedOptions.style.display !== 'none';
             
             if (isVisible) {
                 advancedOptions.style.display = 'none';
-                this.innerHTML = '⚙️ Show Advanced Filters';
+                button.innerHTML = '⚙️ Show Advanced Filters';
             } else {
                 advancedOptions.style.display = 'block';
-                this.innerHTML = '⚙️ Hide Advanced Filters';
+                button.innerHTML = '⚙️ Hide Advanced Filters';
             }
         }
         
@@ -1029,12 +1044,19 @@
         function updateStats(data) {
             const totalCourses = data.courses.length;
             const withPDFs = data.courses.filter(course => course.pdfUrl).length;
-            const searchLocation = `${data.searchParams.city}, ${data.searchParams.state}`;
+            const city = data.searchParams.city || 'Unknown';
+            const state = data.searchParams.state || 'Unknown';
+            const searchLocation = `${city}, ${state}`;
             
-            document.getElementById('totalCourses').textContent = totalCourses;
-            document.getElementById('searchCity').textContent = searchLocation;
-            document.getElementById('withPDFs').textContent = withPDFs;
-            document.getElementById('statsGrid').style.display = 'grid';
+            const totalCoursesEl = document.getElementById('totalCourses');
+            const searchCityEl = document.getElementById('searchCity');
+            const withPDFsEl = document.getElementById('withPDFs');
+            const statsGridEl = document.getElementById('statsGrid');
+            
+            if (totalCoursesEl) totalCoursesEl.textContent = totalCourses;
+            if (searchCityEl) searchCityEl.textContent = searchLocation;
+            if (withPDFsEl) withPDFsEl.textContent = withPDFs;
+            if (statsGridEl) statsGridEl.style.display = 'grid';
         }
         
         function renderCourses(courses) {
@@ -1285,64 +1307,30 @@
         
         async function getCityCoordinates(city, state) {
             try {
-                // Use OpenStreetMap Nominatim for geocoding (free service)
-                // Be more specific to get city/town instead of county
-                const queries = [
-                    `${city}, ${state}, United States&addressdetails=1&featuretype=city`,
-                    `${city}, ${state}, United States&addressdetails=1&featuretype=settlement`,
-                    `${city}, ${state}, United States&addressdetails=1`,
-                    `${city}, ${state}, United States`
-                ];
+                // Use our cached geocoding endpoint with timeout
+                const response = await fetch('/api/geocode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ city, state }),
+                    signal: AbortSignal.timeout(3000) // 3 second timeout
+                });
                 
-                for (const query of queries) {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+                if (response.ok) {
                     const data = await response.json();
-                    
-                    if (data && data.length > 0) {
-                        // Filter for city/town/village results, avoid counties
-                        const cityResult = data.find(result => {
-                            const type = result.type;
-                            const addressType = result.addresstype;
-                            const displayName = result.display_name.toLowerCase();
-                            
-                            // Prefer cities, towns, villages over counties
-                            if (type === 'city' || type === 'town' || type === 'village' || 
-                                addressType === 'city' || addressType === 'town' || addressType === 'village') {
-                                return true;
-                            }
-                            
-                            // Avoid county results
-                            if (type === 'county' || addressType === 'county' || 
-                                displayName.includes('county')) {
-                                return false;
-                            }
-                            
-                            return true;
-                        });
-                        
-                        if (cityResult) {
-                            console.log(`Found city coordinates for ${city}, ${state}:`, cityResult.display_name);
-                            return [parseFloat(cityResult.lat), parseFloat(cityResult.lon)];
-                        }
-                        
-                        // If no specific city found, use first non-county result
-                        const nonCountyResult = data.find(result => {
-                            const displayName = result.display_name.toLowerCase();
-                            return !displayName.includes('county');
-                        });
-                        
-                        if (nonCountyResult) {
-                            console.log(`Using non-county result for ${city}, ${state}:`, nonCountyResult.display_name);
-                            return [parseFloat(nonCountyResult.lat), parseFloat(nonCountyResult.lon)];
-                        }
-                    }
+                    const source = data.cached ? '(cached)' : '(new)';
+                    console.log(`Found coordinates for ${city}, ${state} ${source}:`, data.source || 'geocoded');
+                    return data.coordinates;
                 }
+                
+                console.warn(`Geocoding API failed: ${response.status}`);
             } catch (error) {
-                console.log('Geocoding failed, using state center:', error);
+                console.log('Geocoding API failed, using state center:', error.message);
             }
             
-            // Fallback to state center
-            console.log(`Falling back to state center for ${city}, ${state}`);
+            // Fallback to state center (this always works)
+            console.log(`Using state center for ${city}, ${state}`);
             return getStateCenter(state);
         }
         

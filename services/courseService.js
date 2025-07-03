@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const fs = require('fs-extra');
 const path = require('path');
 const { spawn } = require('child_process');
+const cacheService = require('./cacheService');
 
 class CourseService {
   constructor() {
@@ -316,26 +317,32 @@ class CourseService {
   }
 
   async findCoursePDF(course) {
+    // Check if we already have the PDF locally first
+    const localResult = await this.searchLocalPDFs(course);
+    if (localResult && localResult.pdfPath) {
+      console.log(`Using existing PDF for ${course.id}: ${localResult.pdfPath}`);
+      return localResult;
+    }
+
     console.log(`Searching for PDF for course: ${course.id}`);
     
-    // Try multiple strategies to find the PDF
-    const strategies = [
-      () => this.searchLocalPDFs(course),
-      () => this.searchUSATFCertificateURL(course), // NEW: Use the direct certificate URL
+    // Try download strategies only if no local PDF exists
+    const downloadStrategies = [
+      () => this.searchUSATFCertificateURL(course),
       () => this.searchUSATFDirectLinks(course),
       () => this.searchRaceWebsites(course),
       () => this.searchRunningCalendars(course)
     ];
 
-    for (const strategy of strategies) {
+    for (const strategy of downloadStrategies) {
       try {
         const result = await strategy();
         if (result && result.pdfPath) {
-          console.log(`Found PDF for ${course.id}: ${result.pdfPath}`);
+          console.log(`Downloaded PDF for ${course.id}: ${result.pdfPath}`);
           return result;
         }
       } catch (error) {
-        console.log(`Strategy failed for ${course.id}: ${error.message}`);
+        console.log(`Download strategy failed for ${course.id}: ${error.message}`);
       }
     }
 
@@ -508,6 +515,13 @@ class CourseService {
 
   async extractPDFData(pdfPath) {
     try {
+      // Check cache first
+      const cachedData = cacheService.getPDFCache(pdfPath);
+      if (cachedData) {
+        console.log(`Using cached PDF data for: ${path.basename(pdfPath)}`);
+        return cachedData;
+      }
+
       console.log(`Extracting data from PDF: ${pdfPath}`);
       
       // Use the existing Python PDF extractor
@@ -536,6 +550,10 @@ class CourseService {
             try {
               const result = JSON.parse(output);
               console.log(`Successfully extracted PDF data for: ${path.basename(pdfPath)}`);
+              
+              // Cache the result
+              cacheService.setPDFCache(pdfPath, result);
+              
               resolve(result);
             } catch (parseError) {
               console.error('Failed to parse PDF extraction result:', parseError.message);

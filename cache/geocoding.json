@@ -1,0 +1,29 @@
+{
+  "salina_ks": {
+    "coordinates": [
+      38.8402805,
+      -97.6114237
+    ],
+    "timestamp": 1751567778694,
+    "city": "Salina",
+    "state": "KS"
+  },
+  "hays_ks": {
+    "coordinates": [
+      38.8709984,
+      -99.3311525
+    ],
+    "timestamp": 1751567795999,
+    "city": "Hays",
+    "state": "KS"
+  },
+  "haysville_ks": {
+    "coordinates": [
+      37.5644615,
+      -97.3522675
+    ],
+    "timestamp": 1751567797375,
+    "city": "Haysville",
+    "state": "KS"
+  }
+}
